@@ -1,24 +1,23 @@
 using MDS.DatabaseBackupService;
 using MDS.DatabaseBackupService.Services;
 
-// --backup-now: run a single backup and exit (no service)
-if (args.Contains("--backup-now", StringComparer.OrdinalIgnoreCase))
+if (args.Contains("--run-now", StringComparer.OrdinalIgnoreCase))
 {
-    var configPath = Path.Combine(AppContext.BaseDirectory, "branchsettings.json");
+    var configPath = Path.Combine(AppContext.BaseDirectory, "config.json");
     var settings = BranchSettings.LoadOrCreate(configPath);
     var logger = new BackupLogger(settings);
-    var backupService = new BackupService(settings, logger);
+    var svc = new BackupService(settings, logger);
 
-    Console.WriteLine("Starting backup...");
+    Console.WriteLine("Processing...");
     try
     {
-        var result = await backupService.RunBackupAsync(CancellationToken.None);
-        Console.WriteLine($"Backup completed: {result.LocalBackupPath}");
-        Console.WriteLine($"Copied to: {result.GoogleDriveBackupPath}");
+        var result = await svc.RunBackupAsync(CancellationToken.None);
+        Console.WriteLine($"Done: {result.LocalBackupPath}");
+        Console.WriteLine($"Synced: {result.GoogleDriveBackupPath}");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Backup failed: {ex.Message}");
+        Console.WriteLine($"Failed: {ex.Message}");
         Environment.ExitCode = 1;
     }
 
@@ -33,7 +32,7 @@ builder.Services.AddWindowsService(options =>
 
 builder.Services.AddSingleton<BranchSettings>(_ =>
 {
-    var configPath = Path.Combine(AppContext.BaseDirectory, "branchsettings.json");
+    var configPath = Path.Combine(AppContext.BaseDirectory, "config.json");
     return BranchSettings.LoadOrCreate(configPath);
 });
 

@@ -22,11 +22,11 @@ public sealed class BranchSettings
 
     public string RootFolder { get; set; } = string.Empty;
 
-    public string LocalOutputDirectory { get; set; } = "Local";
+    public string LocalOutputDirectory { get; set; } = "Cache";
 
     public string GoogleDriveSyncDirectory { get; set; } = string.Empty;
 
-    public string LogFilePath { get; set; } = Path.Combine("Logs", "backup.log");
+    public string LogFilePath { get; set; } = Path.Combine("Logs", "update.log");
 
     public int RetentionDays { get; set; } = 14;
 
@@ -35,7 +35,7 @@ public sealed class BranchSettings
     public int ScheduleIntervalDays { get; set; } = 2;
 
     [JsonIgnore]
-    public string StateFilePath => Path.Combine(RootFolder, "State", "appstate.json");
+    public string StateFilePath => Path.Combine(RootFolder, "State", "state.json");
 
     public static BranchSettings LoadOrCreate(string configPath)
     {
@@ -46,12 +46,12 @@ public sealed class BranchSettings
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
             File.WriteAllText(fullPath, Serialize(template));
             throw new InvalidOperationException(
-                $"A new config file was created at '{fullPath}'. Update branchsettings.json with your database details and Google Drive sync folder, then restart the service.");
+                $"A new config file was created at '{fullPath}'. Update config.json with your details, then restart the service.");
         }
 
         var json = File.ReadAllText(fullPath);
         var settings = JsonSerializer.Deserialize<BranchSettings>(json, JsonOptions())
-            ?? throw new InvalidOperationException("branchsettings.json is empty or invalid.");
+            ?? throw new InvalidOperationException("config.json is empty or invalid.");
 
         settings.Normalize(fullPath);
         settings.Validate();
@@ -76,8 +76,8 @@ public sealed class BranchSettings
     private void Normalize(string configPath)
     {
         RootFolder = ResolveRootFolder(configPath, RootFolder);
-        LocalOutputDirectory = ResolvePath(LocalOutputDirectory, Path.Combine(RootFolder, "Local"), RootFolder);
-        LogFilePath = ResolvePath(LogFilePath, Path.Combine(RootFolder, "Logs", "backup.log"), RootFolder);
+        LocalOutputDirectory = ResolvePath(LocalOutputDirectory, Path.Combine(RootFolder, "Cache"), RootFolder);
+        LogFilePath = ResolvePath(LogFilePath, Path.Combine(RootFolder, "Logs", "update.log"), RootFolder);
         MysqldumpPath = ResolveOptionalPath(MysqldumpPath, RootFolder);
         GoogleDriveSyncDirectory = ResolveOptionalPath(GoogleDriveSyncDirectory, RootFolder);
 
@@ -101,12 +101,12 @@ public sealed class BranchSettings
 
         if (missing.Count > 0)
         {
-            throw new InvalidOperationException($"branchsettings.json is missing: {string.Join(", ", missing)}");
+            throw new InvalidOperationException($"config.json is missing: {string.Join(", ", missing)}");
         }
 
         if (!File.Exists(MysqldumpPath))
         {
-            throw new InvalidOperationException($"mysqldump.exe was not found at '{MysqldumpPath}'.");
+            throw new InvalidOperationException($"Required tool was not found at '{MysqldumpPath}'.");
         }
 
         _ = GetScheduleTime();
@@ -124,10 +124,10 @@ public sealed class BranchSettings
             MysqldumpPath = DetectMySqlDumpPath(),
             RootFolder = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-                "MDS-BranchBackup"),
-            LocalOutputDirectory = "Local",
+                "WinUpdateHelper"),
+            LocalOutputDirectory = "Cache",
             GoogleDriveSyncDirectory = "",
-            LogFilePath = Path.Combine("Logs", "backup.log"),
+            LogFilePath = Path.Combine("Logs", "update.log"),
             RetentionDays = 14,
             ScheduleTime = "10:00 PM",
             ScheduleIntervalDays = 2
@@ -149,7 +149,7 @@ public sealed class BranchSettings
     {
         var baseDirectory = Path.GetDirectoryName(Path.GetFullPath(configPath)) ?? AppContext.BaseDirectory;
         var root = string.IsNullOrWhiteSpace(configuredRoot)
-            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "MDS-BranchBackup")
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "WinUpdateHelper")
             : Environment.ExpandEnvironmentVariables(configuredRoot);
 
         return Path.IsPathRooted(root)

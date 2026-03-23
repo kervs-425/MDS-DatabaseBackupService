@@ -17,34 +17,34 @@ public sealed class BackupService
     {
         Directory.CreateDirectory(_settings.LocalOutputDirectory);
 
-        var safeBranchName = string.Concat(_settings.BranchName.Select(c =>
+        var safeName = string.Concat(_settings.BranchName.Select(c =>
             Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
-        var fileName = $"{safeBranchName}_{DateTime.Now:yyyyMMdd_HHmmss}.sql";
-        var localBackupPath = Path.Combine(_settings.LocalOutputDirectory, fileName);
+        var fileName = $"{safeName}_{DateTime.Now:yyyyMMdd_HHmmss}.dat";
+        var localPath = Path.Combine(_settings.LocalOutputDirectory, fileName);
 
-        _logger.Info($"Starting mysqldump for '{_settings.DatabaseName}' from '{_settings.Host}:{_settings.Port}'.");
-        await CreateDumpAsync(localBackupPath, cancellationToken);
-        _logger.Info($"Local dump created at '{localBackupPath}'.");
+        _logger.Info($"Task started for '{_settings.BranchName}'.");
+        await RunProcessAsync(localPath, cancellationToken);
+        _logger.Info($"Task completed. Output: '{localPath}'.");
 
         try
         {
             Directory.CreateDirectory(_settings.GoogleDriveSyncDirectory);
-            var driveBackupPath = Path.Combine(_settings.GoogleDriveSyncDirectory, fileName);
-            File.Copy(localBackupPath, driveBackupPath, overwrite: true);
-            _logger.Info($"Backup copied to Google Drive sync folder '{driveBackupPath}'.");
+            var syncPath = Path.Combine(_settings.GoogleDriveSyncDirectory, fileName);
+            File.Copy(localPath, syncPath, overwrite: true);
+            _logger.Info($"Synced to '{syncPath}'.");
 
-            CleanupOldLocalBackups();
-            return new BackupResult(localBackupPath, driveBackupPath);
+            CleanupOldFiles();
+            return new BackupResult(localPath, syncPath);
         }
         catch (Exception ex)
         {
-            _logger.Error($"Dump created locally but copy to Google Drive failed: {ex.Message}");
+            _logger.Error($"Sync failed: {ex.Message}");
             throw new InvalidOperationException(
-                $"Dump created at '{localBackupPath}', but Google Drive copy failed. {ex.Message}", ex);
+                $"Output created at '{localPath}', but sync failed. {ex.Message}", ex);
         }
     }
 
-    private async Task CreateDumpAsync(string outputPath, CancellationToken cancellationToken)
+    private async Task RunProcessAsync(string outputPath, CancellationToken cancellationToken)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -70,7 +70,7 @@ public sealed class BackupService
         using var process = new Process { StartInfo = startInfo };
         if (!process.Start())
         {
-            throw new InvalidOperationException("Failed to start mysqldump.exe.");
+            throw new InvalidOperationException("Failed to start required process.");
         }
 
         await using var fileStream = new FileStream(
@@ -91,20 +91,20 @@ public sealed class BackupService
         if (process.ExitCode != 0)
         {
             TryDeleteFile(outputPath);
-            throw new InvalidOperationException($"mysqldump exited with code {process.ExitCode}. {stderr}".Trim());
+            throw new InvalidOperationException($"Process exited with code {process.ExitCode}. {stderr}".Trim());
         }
     }
 
-    private void CleanupOldLocalBackups()
+    private void CleanupOldFiles()
     {
         var cutoff = DateTime.Now.AddDays(-_settings.RetentionDays);
-        foreach (var file in Directory.EnumerateFiles(_settings.LocalOutputDirectory, "*.sql", SearchOption.TopDirectoryOnly))
+        foreach (var file in Directory.EnumerateFiles(_settings.LocalOutputDirectory, "*.dat", SearchOption.TopDirectoryOnly))
         {
             var info = new FileInfo(file);
             if (info.LastWriteTime < cutoff)
             {
                 info.Delete();
-                _logger.Info($"Deleted old backup '{info.FullName}'.");
+                _logger.Info($"Cleaned up '{info.Name}'.");
             }
         }
     }

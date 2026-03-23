@@ -20,7 +20,7 @@ public sealed class BackupWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.Info("MDS Database Backup Service started.");
+        _logger.Info("Service started.");
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -28,7 +28,7 @@ public sealed class BackupWorker : BackgroundService
             {
                 if (IsBackupDue())
                 {
-                    await RunBackupAsync(stoppingToken);
+                    await RunAsync(stoppingToken);
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -36,13 +36,13 @@ public sealed class BackupWorker : BackgroundService
                 _state.LastFailureUtc = DateTimeOffset.UtcNow;
                 _state.LastFailureMessage = ex.Message;
                 _stateStore.Save(_state);
-                _logger.Error($"Backup failed: {ex.Message}");
+                _logger.Error($"Task failed: {ex.Message}");
             }
 
             await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
         }
 
-        _logger.Info("MDS Database Backup Service stopped.");
+        _logger.Info("Service stopped.");
     }
 
     private bool IsBackupDue()
@@ -51,9 +51,9 @@ public sealed class BackupWorker : BackgroundService
         return nextRun <= DateTime.Now;
     }
 
-    private async Task RunBackupAsync(CancellationToken cancellationToken)
+    private async Task RunAsync(CancellationToken cancellationToken)
     {
-        _logger.Info($"Scheduled backup started at {DateTime.Now:yyyy-MM-dd HH:mm:ss}.");
+        _logger.Info($"Scheduled task started at {DateTime.Now:yyyy-MM-dd HH:mm:ss}.");
         _state.LastAttemptUtc = DateTimeOffset.UtcNow;
         _stateStore.Save(_state);
 
@@ -65,6 +65,6 @@ public sealed class BackupWorker : BackgroundService
         _state.LastFailureMessage = null;
         _stateStore.Save(_state);
 
-        _logger.Info($"Backup completed. Local: {result.LocalBackupPath}");
+        _logger.Info($"Task completed. Output: {result.LocalBackupPath}");
     }
 }
