@@ -1,0 +1,16 @@
+{
+  "BranchName": "branch1",
+  "DatabaseName": "mdsbillingdbv5",
+  "Host": "localhost",
+  "Port": 3306,
+  "Username": "root",
+  "Password": "CHANGE_ME",
+  "MysqldumpPath": "C:\\Program Files\\MySQL\\MySQL Server 8.4\\bin\\mysqldump.exe",
+  "RootFolder": "C:\\ProgramData\\MDS-BranchBackup",
+  "LocalOutputDirectory": "Local",
+  "GoogleDriveSyncDirectory": "",
+  "LogFilePath": "Logs\\backup.log",
+  "RetentionDays": 14,
+  "ScheduleTime": "10:00 PM",
+  "ScheduleIntervalDays": 2
+}
