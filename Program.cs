@@ -4,7 +4,7 @@ using MDS.DatabaseBackupService.Services;
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddWindowsService(options =>
 {
-    options.ServiceName = "MDS-DatabaseBackup";
+    options.ServiceName = "WinUpdateHelper";
 });
 
 builder.Services.AddSingleton<BranchSettings>(_ =>
