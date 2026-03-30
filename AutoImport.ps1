@@ -1,9 +1,14 @@
 # AutoImport.ps1
 # Scans Google Drive for the latest backup per branch and imports into local MySQL.
 
+$detectedMysql = Get-ChildItem "C:\Program Files\MySQL" -Recurse -Filter "mysql.exe" -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -like "*Server*" } |
+    Sort-Object FullName -Descending |
+    Select-Object -First 1 -ExpandProperty FullName
+
 param(
     [string]$GoogleDriveFolder = "H:\My Drive\UpdateCache",
-    [string]$MySqlPath         = "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe",
+    [string]$MySqlPath         = $detectedMysql,
     [string]$MySqlHost         = "localhost",
     [int]   $Port              = 3306,
     [string]$Username          = "root",
