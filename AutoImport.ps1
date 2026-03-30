@@ -3,7 +3,7 @@
 
 param(
     [string]$GoogleDriveFolder = "H:\My Drive\UpdateCache",
-    [string]$MySqlPath         = "C:\Program Files\MySQL\MySQL Server 5.7\bin\mysql.exe",
+    [string]$MySqlPath         = "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe",
     [string]$MySqlHost         = "localhost",
     [int]   $Port              = 3306,
     [string]$Username          = "root",
