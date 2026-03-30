@@ -131,7 +131,9 @@ foreach ($branch in $byBranch.Keys) {
         Run-Mysql $createSql
 
         $env:MYSQL_PWD = $Password
-        Get-Content $latest.FullName -Raw | & $MySqlPath "--host=$MySqlHost" "--port=$Port" "--user=$Username" $dbName 2>&1
+        $dumpContent = Get-Content $latest.FullName -Raw
+        $dumpContent = $dumpContent -replace ',NO_AUTO_CREATE_USER', '' -replace 'NO_AUTO_CREATE_USER,', '' -replace 'NO_AUTO_CREATE_USER', ''
+        $dumpContent | & $MySqlPath "--host=$MySqlHost" "--port=$Port" "--user=$Username" $dbName 2>&1
         $code = $LASTEXITCODE
         Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
 
