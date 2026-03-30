@@ -3,13 +3,15 @@
 param(
     [string]$ScriptPath    = "C:\Program Files\WinUpdateHelper\AutoImport.ps1",
     [string]$RunAt         = "06:00",
-    [string]$TaskUser      = $env:USERNAME
+    [string]$TaskUser      = $env:USERNAME,
+    [string[]]$Folders     = @("H:\My Drive\UpdateCache")
 )
 
+$folderArgs = ($Folders | ForEach-Object { "`"$_`"" }) -join ","
 $taskName = "WinUpdateHelper-AutoImport"
 $action   = New-ScheduledTaskAction `
     -Execute "powershell.exe" `
-    -Argument "-NonInteractive -ExecutionPolicy Bypass -File `"$ScriptPath`""
+    -Argument "-NonInteractive -ExecutionPolicy Bypass -File `"$ScriptPath`" -GoogleDriveFolders $folderArgs"
 
 $trigger  = New-ScheduledTaskTrigger -Daily -At $RunAt
 

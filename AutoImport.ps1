@@ -1,14 +1,9 @@
 # AutoImport.ps1
 # Scans Google Drive for the latest backup per branch and imports into local MySQL.
 
-$detectedMysql = Get-ChildItem "C:\Program Files\MySQL" -Recurse -Filter "mysql.exe" -ErrorAction SilentlyContinue |
-    Where-Object { $_.FullName -like "*Server*" } |
-    Sort-Object FullName -Descending |
-    Select-Object -First 1 -ExpandProperty FullName
-
 param(
-    [string]$GoogleDriveFolder = "H:\My Drive\UpdateCache",
-    [string]$MySqlPath         = $detectedMysql,
+    [string[]]$GoogleDriveFolders = @("H:\My Drive\UpdateCache"),
+    [string]$MySqlPath         = "",
     [string]$MySqlHost         = "localhost",
     [int]   $Port              = 3306,
     [string]$Username          = "root",
@@ -21,6 +16,13 @@ param(
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+if ([string]::IsNullOrEmpty($MySqlPath)) {
+    $MySqlPath = Get-ChildItem "C:\Program Files\MySQL" -Recurse -Filter "mysql.exe" -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -like "*Server*" } |
+        Sort-Object FullName -Descending |
+        Select-Object -First 1 -ExpandProperty FullName
+}
 
 function Write-Log {
     param([string]$Level, [string]$Message)
@@ -72,19 +74,21 @@ if (-not (Test-Path $MySqlPath)) {
     exit 1
 }
 
-if (-not (Test-Path $GoogleDriveFolder)) {
-    Write-Log "ERROR" "Google Drive folder not found: '$GoogleDriveFolder'."
-    exit 1
+# ---------------------------------------------------------------------------
+# Scan and group files by branch (across all folders)
+# ---------------------------------------------------------------------------
+
+$files = @()
+foreach ($folder in $GoogleDriveFolders) {
+    if (-not (Test-Path $folder)) {
+        Write-Log "ERROR" "Google Drive folder not found: '$folder'. Skipping."
+        continue
+    }
+    $files += Get-ChildItem -Path $folder -Filter "*.dat" -File
 }
 
-# ---------------------------------------------------------------------------
-# Scan and group files by branch
-# ---------------------------------------------------------------------------
-
-$files = Get-ChildItem -Path $GoogleDriveFolder -Filter "*.dat" -File
-
 if ($files.Count -eq 0) {
-    Write-Log "INFO" "No .dat files found in '$GoogleDriveFolder'. Nothing to import."
+    Write-Log "INFO" "No .dat files found. Nothing to import."
     exit 0
 }
 
