@@ -115,8 +115,8 @@ public sealed class BranchSettings
     private static BranchSettings CreateTemplate() =>
         new()
         {
-            BranchName = "branch1",
-            DatabaseName = "mdsbillingdbv5",
+            BranchName = "quezon",
+            DatabaseName = "bcs_quezon",
             Host = "localhost",
             Port = 3306,
             Username = "root",

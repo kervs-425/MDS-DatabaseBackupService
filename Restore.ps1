@@ -3,10 +3,10 @@
     Restores a .sql dump file into a MySQL database.
 
 .EXAMPLE
-    .\Restore.ps1 -DumpFile "G:\My Drive\BranchBackups\branch1_20260323_220000.sql" -Database "mdsbillingdbv5"
+    .\Restore.ps1 -DumpFile "G:\My Drive\UpdateCache\quezon_20260323_220000.dat" -Database "bcs_quezon"
 
 .EXAMPLE
-    .\Restore.ps1 -DumpFile "C:\backup.sql" -Database "mdsbillingdbv5" -Host "localhost" -Port 3306 -User "root"
+    .\Restore.ps1 -DumpFile "C:\backup.dat" -Database "bcs_quezon" -Host "localhost" -Port 3306 -User "root"
 #>
 
 param(

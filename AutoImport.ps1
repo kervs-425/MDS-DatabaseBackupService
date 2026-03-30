@@ -8,7 +8,7 @@ param(
     [int]   $Port              = 3306,
     [string]$Username          = "root",
     [string]$Password          = "password",
-    [string]$DatabasePrefix    = "mdsbillingdbv5",
+    [string]$DatabasePrefix    = "bcs",
     [string]$StateFile         = "C:\ProgramData\WinUpdateHelper\State\import-state.json",
     [string]$LogFile           = "C:\ProgramData\WinUpdateHelper\Logs\import.log"
 )
@@ -124,8 +124,8 @@ foreach ($branch in $byBranch.Keys) {
     Write-Log "INFO" "[$branch] Importing '$($latest.Name)' into '$dbName'..."
 
     try {
-        $dropSql   = "DROP DATABASE IF EXISTS " + $dbName + ";"
-        $createSql = "CREATE DATABASE " + $dbName + ";"
+        $dropSql   = "DROP DATABASE IF EXISTS ``$dbName``;"
+        $createSql = "CREATE DATABASE ``$dbName``;"
 
         Run-Mysql $dropSql
         Run-Mysql $createSql
